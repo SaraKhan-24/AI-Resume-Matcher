@@ -1,5 +1,4 @@
 import pathlib
-from pypdf import PdfReader
 from docx import Document
 import pdfplumber
 def extract_text_from_pdf(file_path:str)->str:
