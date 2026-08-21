@@ -82,11 +82,14 @@ def insert_candidate(conn: sqlite3.Connection,candidate:Candidate)->int:
         cursor.execute("SELECT Skill_ID FROM Skill WHERE Name=? LIMIT 1 ",(skill.lower(),))
         exists=cursor.fetchone()
         if exists==None:
-            cursor.execute("INSERT INTO Skill (Name) VALUES (?)",(skill,))
+            cursor.execute("INSERT INTO Skill (Name) VALUES (?)",(skill.lower(),))
             skill_id=cursor.lastrowid
         else:
             skill_id=exists[0]
-        cursor.execute("INSERT INTO CandidateSkill (Skill_ID,Candidate_ID) VALUES (?,?)",(skill_id,candidate_id))
+        cursor.execute("SELECT Candidate_ID FROM CandidateSkill WHERE Skill_ID=? AND Candidate_ID=? LIMIT 1",(skill_id,candidate_id))
+        composite_exists=cursor.fetchone()
+        if composite_exists==None:
+            cursor.execute("INSERT INTO CandidateSkill (Skill_ID,Candidate_ID) VALUES (?,?)",(skill_id,candidate_id))
     conn.commit()
     return candidate_id
 
@@ -94,24 +97,4 @@ def insert_candidate(conn: sqlite3.Connection,candidate:Candidate)->int:
 if __name__=="__main__":
     conn=get_connection()
     create_tables(conn)
-    test_candidate = Candidate(name="Test Person", description="A test")
-    exp=ExperienceEntry(
-        title="Software Engineer",
-        company="Tech Corp",
-        job_type="Full-Time",
-        start_date=date(2023,1,15)
-    )
-    edu=EducationEntry(
-        institution="NUML",
-        field_of_study="Computer Science",
-        gpa=3.4,
-        start_date=date(2021,1,15)
-    )
-    test_candidate.skills=['Java','C++','Python','SQL','Data Structures']
-    test_candidate.education.append(edu)
-    test_candidate.experience.append(exp)
-    new_id = insert_candidate(conn, test_candidate)
-    print(new_id)
-    new_id = insert_candidate(conn, test_candidate)
-    print(new_id)
     conn.close()
