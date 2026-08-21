@@ -1,5 +1,7 @@
+from src.validation import EducationEntry
 import sqlite3
-
+from src.validation import Candidate,ExperienceEntry,EducationEntry
+from datetime import date
 
 def get_connection() -> sqlite3.Connection:
     conn=sqlite3.connect("resumes.db")#Opens/Creates the file
@@ -58,8 +60,58 @@ def create_tables(conn: sqlite3.Connection) -> None:
     """)
     conn.commit()
 
+def insert_candidate(conn: sqlite3.Connection,candidate:Candidate)->int:
+    cursor=conn.cursor()
+   
+    cursor.execute("INSERT INTO Candidate(Name,Description) VALUES(?,?)",(candidate.name,candidate.description))
+    candidate_id=cursor.lastrowid
+
+    for exp in candidate.experience:
+        end_date=None
+        if(exp.end_date!=None):
+            end_date=str(exp.end_date)
+        cursor.execute("INSERT INTO ExperienceEntry (Candidate_ID,Title,Company,Job_type,Start_date,End_date) VALUES (?,?,?,?,?,?)",(candidate_id,exp.title,exp.company,exp.job_type,str(exp.start_date),end_date))
+
+    for edu in candidate.education:
+        end_date=None
+        if(edu.end_date!=None):
+            end_date=str(edu.end_date)
+        cursor.execute("INSERT INTO EducationEntry (Candidate_ID,Institution,Field_of_study,GPA,Start_date,End_date) VALUES (?,?,?,?,?,?)",(candidate_id,edu.institution,edu.field_of_study,edu.gpa,str(edu.start_date),end_date))
+
+    for skill in candidate.skills:
+        cursor.execute("SELECT Skill_ID FROM Skill WHERE Name=? LIMIT 1 ",(skill.lower(),))
+        exists=cursor.fetchone()
+        if exists==None:
+            cursor.execute("INSERT INTO Skill (Name) VALUES (?)",(skill,))
+            skill_id=cursor.lastrowid
+        else:
+            skill_id=exists[0]
+        cursor.execute("INSERT INTO CandidateSkill (Skill_ID,Candidate_ID) VALUES (?,?)",(skill_id,candidate_id))
+    conn.commit()
+    return candidate_id
+
 
 if __name__=="__main__":
     conn=get_connection()
     create_tables(conn)
+    test_candidate = Candidate(name="Test Person", description="A test")
+    exp=ExperienceEntry(
+        title="Software Engineer",
+        company="Tech Corp",
+        job_type="Full-Time",
+        start_date=date(2023,1,15)
+    )
+    edu=EducationEntry(
+        institution="NUML",
+        field_of_study="Computer Science",
+        gpa=3.4,
+        start_date=date(2021,1,15)
+    )
+    test_candidate.skills=['Java','C++','Python','SQL','Data Structures']
+    test_candidate.education.append(edu)
+    test_candidate.experience.append(exp)
+    new_id = insert_candidate(conn, test_candidate)
+    print(new_id)
+    new_id = insert_candidate(conn, test_candidate)
+    print(new_id)
     conn.close()
