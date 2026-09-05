@@ -10,3 +10,7 @@ testfiles/
 
 #sqldb
 resumes.db
+
+#Python Cache
+__pycache__/
+*.py[cod]
