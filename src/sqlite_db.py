@@ -1,7 +1,6 @@
 from src.validation import EducationEntry
 import sqlite3
 from src.validation import Candidate,ExperienceEntry,EducationEntry
-from datetime import date
 
 def get_connection() -> sqlite3.Connection:
     conn=sqlite3.connect("resumes.db")#Opens/Creates the file
@@ -13,7 +12,8 @@ def create_tables(conn: sqlite3.Connection) -> None:
     CREATE TABLE IF NOT EXISTS Candidate (
         Candidate_ID INTEGER PRIMARY KEY,
         Name TEXT NOT NULL,
-        Description TEXT
+        Description TEXT,
+        Role TEXT
     )
     """)
     conn.commit()
@@ -63,20 +63,20 @@ def create_tables(conn: sqlite3.Connection) -> None:
 def insert_candidate(conn: sqlite3.Connection,candidate:Candidate)->int:
     cursor=conn.cursor()
    
-    cursor.execute("INSERT INTO Candidate(Name,Description) VALUES(?,?)",(candidate.name,candidate.description))
+    cursor.execute("INSERT INTO Candidate(Name, Description, Role) VALUES(?,?,?)",(candidate.name, candidate.description, candidate.role))
     candidate_id=cursor.lastrowid
 
     for exp in candidate.experience:
-        end_date=None
-        if(exp.end_date!=None):
-            end_date=str(exp.end_date)
-        cursor.execute("INSERT INTO ExperienceEntry (Candidate_ID,Title,Company,Job_type,Start_date,End_date) VALUES (?,?,?,?,?,?)",(candidate_id,exp.title,exp.company,exp.job_type,str(exp.start_date),end_date))
+        end_date = None
+        if(exp.end_date != None):
+            end_date = exp.end_date
+        cursor.execute("INSERT INTO ExperienceEntry (Candidate_ID,Title,Company,Job_type,Start_date,End_date) VALUES (?,?,?,?,?,?)", (candidate_id, exp.title, exp.company, exp.job_type, exp.start_date, end_date))
 
     for edu in candidate.education:
-        end_date=None
-        if(edu.end_date!=None):
-            end_date=str(edu.end_date)
-        cursor.execute("INSERT INTO EducationEntry (Candidate_ID,Institution,Field_of_study,GPA,Start_date,End_date) VALUES (?,?,?,?,?,?)",(candidate_id,edu.institution,edu.field_of_study,edu.gpa,str(edu.start_date),end_date))
+        end_date = None
+        if(edu.end_date != None):
+            end_date = edu.end_date
+        cursor.execute("INSERT INTO EducationEntry (Candidate_ID,Institution,Field_of_study,GPA,Start_date,End_date) VALUES (?,?,?,?,?,?)", (candidate_id, edu.institution, edu.field_of_study, edu.gpa, edu.start_date, end_date))
 
     for skill in candidate.skills:
         cursor.execute("SELECT Skill_ID FROM Skill WHERE Name=? LIMIT 1 ",(skill.lower(),))
@@ -94,7 +94,7 @@ def insert_candidate(conn: sqlite3.Connection,candidate:Candidate)->int:
     return candidate_id
 
 
-if __name__=="__main__":
-    conn=get_connection()
-    create_tables(conn)
-    conn.close()
+# if __name__=="__main__":
+#     conn=get_connection()
+#     create_tables(conn)
+#     conn.close()

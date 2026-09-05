@@ -4,3 +4,9 @@ venv/
 
 #Test Files
 testfiles/
+
+#Environment Variables
+.env
+
+#sqldb
+resumes.db
